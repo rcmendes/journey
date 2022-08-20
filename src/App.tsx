@@ -1,30 +1,94 @@
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
+
+interface Event {
+    title: string;
+    actors: string[];
+}
+
+interface Chapter {
+    title: string;
+    events: Event[];
+}
+interface Journey {
+    title: string;
+    description: string;
+    chapters: Chapter[];
+}
+
+type journeyContextData = {
+    data: Journey;
+    update(new_value: string): void;
+};
+
+const journeyContext = createContext({} as journeyContextData);
+
+const useJourney = () => {
+    return useContext(journeyContext);
+};
+
+const JourneyProvider = ({ children }: any) => {
+    const [journey, setJourney] = useState(JOURNEY);
+
+    const value = {
+        data: journey,
+        update: (new_value: string) => {
+            try {
+                setJourney(JSON.parse(new_value));
+            } catch (e) {
+                console.error(e);
+            }
+        },
+    };
+
+    return (
+        <journeyContext.Provider value={value}>
+            {children}
+        </journeyContext.Provider>
+    );
+};
 
 function App() {
     return (
-        <div className="flex flex-col bg-slate-100 w-screen h-screen">
-            <header className="bg-slate-700 text-center p-2 text-white">
-                <h1 className="text-xl font-bold">{JOURNEY.title}</h1>
-                <p className="text-sm font-light mt-1">{JOURNEY.description}</p>
-            </header>
-            <main className="grow flex flex-row">
-                <Editor />
-                <div className="flex flex-col">
-                    <JourneyMap />
-                    <TechnicalNotes />
-                </div>
-            </main>
-        </div>
+        <JourneyProvider>
+            <div className="flex flex-col bg-slate-100 w-screen h-screen">
+                <JourneyHeader />
+                <main className="grow flex flex-row">
+                    <Editor />
+                    <div className="bg-slate-300 w-2 cursor-move hover:bg-slate-700 hover:shadow-lg"/>
+                    <div className="flex flex-col">
+                        <JourneyMap />
+                        <TechnicalNotes />
+                    </div>
+                </main>
+            </div>
+        </JourneyProvider>
     );
 }
 
+const JourneyHeader = () => {
+    const handler = useJourney();
+    const journey = handler.data;
+
+    return (
+        <header className="bg-slate-700 text-center p-2 text-white">
+            <h1 className="text-xl font-bold">{journey.title}</h1>
+            <p className="text-sm font-light mt-1">{journey.description}</p>
+        </header>
+    );
+};
+
 const Editor = () => {
-    const [journey, setJourney] = useState(JOURNEY);
+    const handler = useJourney();
+    const journey = handler.data;
 
     return (
         <div className="flex flex-col text-black border-r-4 border-slate-300 basis-1/3">
             <div className="bg-slate-500 text-white text-lg">TOOLBAR</div>
-            <textarea className="grow resize-none" value={JSON.stringify(journey)}/>
+            <textarea
+                className="grow resize-none text-sm"
+                value={JSON.stringify(journey, null, 4)}
+                onChange={(evt) => handler.update(evt.target.value)}
+            />
         </div>
     );
 };
@@ -40,12 +104,15 @@ const TechnicalNotes = () => {
 };
 
 const JourneyMap = () => {
+    const handler = useJourney();
+    const journey = handler.data;
+
     return (
         <div className="flex gap-1 justify-evenly basis-3/4">
             {journey.chapters.map((chapter, idx) => {
                 return (
                     <div
-                        key={chapter.id}
+                        key={idx}
                         className={`w-full p-2 ${idx > 0 ? "border-l-2" : ""}`}
                     >
                         <h1 className="border-b-slate-300 border-b-2 text-white p-1 font-bold text-lg bg-slate-500 opacity-75 rounded-md">
@@ -80,7 +147,7 @@ const JourneyMap = () => {
                                                 className="text-white rounded-full w-4 h-4 bg-indigo-900 font-light opacity-80"
                                                 key={idx}
                                             >
-                                                {idx +1}
+                                                {idx + 1}
                                             </span>
                                         </div>
                                     </div>

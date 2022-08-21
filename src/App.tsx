@@ -1,8 +1,9 @@
 import { createContext, useContext, useState } from "react";
+import YAML from "yaml";
 
 interface Event {
     title: string;
-    actors: string[];
+    tags: string[];
 }
 
 interface Chapter {
@@ -27,13 +28,16 @@ const useJourney = () => {
 };
 
 const JourneyProvider = ({ children }: any) => {
-    const [journey, setJourney] = useState(JOURNEY);
+    const [journey, setJourney] = useState(JOURNEY_JSON);
+    // const [journey, setJourney] = useState(JOURNEY_YAML);
 
     const value = {
         data: journey,
         update: (new_value: string) => {
             try {
-                setJourney(JSON.parse(new_value));
+                // setJourney(JSON.parse(new_value));
+                const parsed_data = YAML.parse(new_value);
+                setJourney(parsed_data as Journey);
             } catch (e) {
                 console.error(e);
             }
@@ -85,8 +89,9 @@ const Editor = () => {
         <div className="flex flex-col text-black border-r-4 border-slate-300 basis-1/3">
             <div className="text-lg text-white bg-slate-500">TOOLBAR</div>
             <textarea
-                className="text-sm resize-none grow"
-                value={JSON.stringify(journey, null, 4)}
+                className="p-1 text-sm resize-none grow"
+                // value={JSON.stringify(journey, null, 4)}
+                value={YAML.stringify(journey)}
                 onChange={(evt) => handler.update(evt.target.value)}
             />
         </div>
@@ -109,7 +114,7 @@ const JourneyMap = () => {
 
     return (
         <div className="flex gap-1 justify-evenly basis-3/4">
-            {journey.chapters.map((chapter, idx) => {
+            {journey.chapters && journey.chapters.map((chapter, idx) => {
                 return (
                     <div
                         key={idx}
@@ -119,7 +124,7 @@ const JourneyMap = () => {
                             {chapter.title}
                         </h1>
                         <div className="flex flex-wrap justify-center">
-                            {chapter.events.map((evt, idx) => {
+                            {chapter.events && chapter.events.map((evt, idx) => {
                                 return (
                                     <div
                                         key={idx}
@@ -130,14 +135,14 @@ const JourneyMap = () => {
                                         </span>
                                         <div className="flex justify-between gap-1 mt-1 text-xs text-center">
                                             <div className="flex gap-1">
-                                                {evt.actors.map(
-                                                    (actor, idx) => {
+                                                {evt.tags && evt.tags.map(
+                                                    (tag, idx) => {
                                                         return (
                                                             <span
                                                                 className="px-1 text-white bg-blue-700 rounded-md"
                                                                 key={idx}
                                                             >
-                                                                {actor}
+                                                                {tag}
                                                             </span>
                                                         );
                                                     }
@@ -161,80 +166,114 @@ const JourneyMap = () => {
     );
 };
 
-const JOURNEY = {
+const JOURNEY_JSON = {
     title: "Fake Journey",
     description: "This is a description of the Fake journey.",
     chapters: [
         {
-            id: 1,
             title: "Chapter 1",
             events: [
                 {
                     title: "Keycloak login page is shown.",
-                    actors: ["Keycloak"],
+                    tags: ["Keycloak"],
                 },
                 {
                     title: "The user fills in its credentials and fires login.",
-                    actors: ["User"],
+                    tags: ["User"],
                 },
                 {
-                    title: "Keycloak validates the user's credentials and then verifies if the user exists in its the database.",
-                    actors: ["Keycloak"],
+                    title: "Keycloak validates the user's credentials and then verifies if the user exists in its database.",
+                    tags: ["Keycloak"],
                 },
                 {
-                    title: "If the user doesn't exists, Keycloak will request the User's data to AC Cloud api.auth2 backend.",
-                    actors: ["Keycloak", "Python backend"],
+                    title: "If the user doesn't exist, Keycloak will request the User's data to AC Cloud api.auth2 backend.",
+                    tags: ["Keycloak", "Python backend"],
                 },
             ],
         },
         {
-            id: 2,
             title: "Chapter 2",
             events: [
                 {
-                    id: "2-a",
                     title: "Chapter 2, event A",
-                    actors: [],
+                    tags: [],
                 },
                 {
-                    id: "2-b",
                     title: "Chapter 2, event B",
-                    actors: [],
+                    tags: [],
                 },
                 {
-                    id: "2-c",
                     title: "Chapter 2, event C",
-                    actors: [],
+                    tags: [],
                 },
             ],
         },
         {
-            id: 3,
             title: "Chapter 3",
             events: [
                 {
-                    id: "3-a",
                     title: "Chapter 3, event A",
-                    actors: [],
+                    tags: [],
                 },
                 {
-                    id: "3-b",
                     title: "Chapter 3, event B",
-                    actors: [],
+                    tags: [],
                 },
                 {
-                    id: "3-c",
                     title: "Chapter 3, event C",
-                    actors: [],
+                    tags: [],
                 },
                 {
-                    id: "3-d",
                     title: "Chapter 3, event D",
-                    actors: [],
+                    tags: [],
                 },
             ],
         },
     ],
 };
+
+const JOURNEY_YAML = `
+title: Fake Journey
+description: This is a description of the Fake journey.
+chapters:
+- title: Chapter 1
+  events:
+  - title: Keycloak login page is shown.
+    tags:
+    - Keycloak
+  - title: The user fills in its credentials and fires login.
+    tags:
+    - User
+  - title: Keycloak validates the user's credentials and then verifies if the user
+      exists in its database.
+    tags:
+    - Keycloak
+  - title: If the user doesn't exist, Keycloak will request the User's data to AC
+      Cloud api.auth2 backend.
+    tags:
+    - Keycloak
+    - Python backend
+- title: Chapter 2
+  events:
+  - title: Chapter 2, event A
+    tags: []
+  - title: Chapter 2, event B
+    tags: []
+  - title: Chapter 2, event C
+    tags: []
+- title: Chapter 3
+  events:
+  - title: Chapter 3, event A
+    tags: []
+  - title: Chapter 3, event B
+    tags: []
+  - title: Chapter 3, event C
+    tags: []
+  - title: Chapter 3, event D
+    tags: []
+`
+for (let i=0; i<3; i++) {
+
+}
 
 export default App;

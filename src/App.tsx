@@ -50,11 +50,11 @@ const JourneyProvider = ({ children }: any) => {
 function App() {
     return (
         <JourneyProvider>
-            <div className="flex flex-col bg-slate-100 w-screen h-screen">
+            <div className="flex flex-col w-screen h-screen bg-slate-100">
                 <JourneyHeader />
-                <main className="grow flex flex-row">
+                <main className="flex flex-row grow">
                     <Editor />
-                    <div className="bg-slate-300 w-2 cursor-move hover:bg-slate-700 hover:shadow-lg"/>
+                    <div className="w-2 cursor-move bg-slate-300 hover:bg-slate-700 hover:shadow-lg"/>
                     <div className="flex flex-col">
                         <JourneyMap />
                         <TechnicalNotes />
@@ -70,9 +70,9 @@ const JourneyHeader = () => {
     const journey = handler.data;
 
     return (
-        <header className="bg-slate-700 text-center p-2 text-white">
+        <header className="p-2 text-center text-white bg-slate-700">
             <h1 className="text-xl font-bold">{journey.title}</h1>
-            <p className="text-sm font-light mt-1">{journey.description}</p>
+            <p className="mt-1 text-sm font-light">{journey.description}</p>
         </header>
     );
 };
@@ -83,9 +83,9 @@ const Editor = () => {
 
     return (
         <div className="flex flex-col text-black border-r-4 border-slate-300 basis-1/3">
-            <div className="bg-slate-500 text-white text-lg">TOOLBAR</div>
+            <div className="text-lg text-white bg-slate-500">TOOLBAR</div>
             <textarea
-                className="grow resize-none text-sm"
+                className="text-sm resize-none grow"
                 value={JSON.stringify(journey, null, 4)}
                 onChange={(evt) => handler.update(evt.target.value)}
             />
@@ -95,8 +95,8 @@ const Editor = () => {
 
 const TechnicalNotes = () => {
     return (
-        <div className="text-slate-700 border-dashed border-t-2 mt-4 p-2 grow">
-            <h1 className="text-slate-700 text-lg font-bold">
+        <div className="p-2 mt-4 border-t-2 border-dashed text-slate-700 grow">
+            <h1 className="text-lg font-bold text-slate-700">
                 Technical notes
             </h1>
         </div>
@@ -113,9 +113,9 @@ const JourneyMap = () => {
                 return (
                     <div
                         key={idx}
-                        className={`w-full p-2 ${idx > 0 ? "border-l-2" : ""}`}
+                        className={`w-full pl-2 pr-1 ${idx > 0 ? "border-l-2" : ""}`}
                     >
-                        <h1 className="border-b-slate-300 border-b-2 text-white p-1 font-bold text-lg bg-slate-500 opacity-75 rounded-md">
+                        <h1 className="px-1 text-lg font-bold text-white border-b-2 rounded-md border-b-slate-300 bg-slate-500">
                             {chapter.title}
                         </h1>
                         <div className="flex flex-wrap justify-center">
@@ -123,18 +123,18 @@ const JourneyMap = () => {
                                 return (
                                     <div
                                         key={idx}
-                                        className="m-2 bg-white text-slate-900 p-2 shadow-lg flex flex-col justify-between w-60"
+                                        className="flex flex-col justify-between p-2 m-2 bg-white shadow-lg text-slate-900 w-60"
                                     >
                                         <span className="text-sm">
                                             {evt.title}
                                         </span>
-                                        <div className="flex justify-between gap-1 text-center text-xs mt-1">
+                                        <div className="flex justify-between gap-1 mt-1 text-xs text-center">
                                             <div className="flex gap-1">
                                                 {evt.actors.map(
                                                     (actor, idx) => {
                                                         return (
                                                             <span
-                                                                className="text-white bg-blue-700 rounded-md px-1"
+                                                                className="px-1 text-white bg-blue-700 rounded-md"
                                                                 key={idx}
                                                             >
                                                                 {actor}
@@ -144,7 +144,7 @@ const JourneyMap = () => {
                                                 )}
                                             </div>
                                             <span
-                                                className="text-white rounded-full w-4 h-4 bg-indigo-900 font-light opacity-80"
+                                                className="w-4 h-4 font-light text-white bg-indigo-900 rounded-full opacity-80"
                                                 key={idx}
                                             >
                                                 {idx + 1}

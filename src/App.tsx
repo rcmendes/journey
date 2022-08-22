@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import YAML from "yaml";
 import Editor from "@monaco-editor/react";
 import MDEditor from "@uiw/react-md-editor";
+
 interface Event {
     title: string;
     tags: string[];
@@ -19,7 +20,9 @@ interface Journey {
 
 type journeyContextData = {
     data: Journey;
-    update(new_value: string): void;
+    notes: string;
+    updateData(new_value: string): void;
+    updateNotes(new_value: string): void;
 };
 
 const journeyContext = createContext({} as journeyContextData);
@@ -30,15 +33,23 @@ const useJourney = () => {
 
 const JourneyProvider = ({ children }: any) => {
     const [journey, setJourney] = useState(JOURNEY_JSON);
-    // const [journey, setJourney] = useState(JOURNEY_YAML);
+    const [notes, setNotes] = useState("");
 
     const value = {
         data: journey,
-        update: (new_value: string) => {
+        notes,
+        updateData: (new_value: string) => {
             try {
                 // setJourney(JSON.parse(new_value));
                 const parsed_data = YAML.parse(new_value);
                 setJourney(parsed_data as Journey);
+            } catch (e) {
+                console.error(e);
+            }
+        },
+        updateNotes: (new_value: string) => {
+            try {
+                setNotes(new_value);
             } catch (e) {
                 console.error(e);
             }
@@ -56,11 +67,11 @@ function App() {
     return (
         <JourneyProvider>
             <div className="flex flex-col w-screen h-screen bg-slate-100">
+                <JourneyHeader />
                 <main className="flex flex-row grow">
                     <JourneyEditor />
                     <div className="w-2 cursor-move bg-slate-300 hover:bg-slate-700 hover:shadow-lg" />
-                    <div className="flex flex-col">
-                    <JourneyHeader />
+                    <div className="flex flex-col grow">
                         <JourneyMap />
                         <TechnicalNotes />
                     </div>
@@ -75,7 +86,7 @@ const JourneyHeader = () => {
     const journey = handler.data;
 
     return (
-        <header className="p-1 text-center text-white bg-slate-700">
+        <header className="p-1 mb-1 text-center text-white bg-slate-700">
             <h1 className="text-xl font-bold">{journey.title}</h1>
             <p className="text-sm font-light">{journey.description}</p>
         </header>
@@ -89,14 +100,14 @@ const JourneyEditor = () => {
     function handleEditorChange(value: string | undefined, event: any) {
         // console.log("here is the current model value:", value, "| type:", typeof(event));
         if (typeof value === "string") {
-            handler.update(value);
+            handler.updateData(value);
         }
     }
 
     return (
         <div className="flex flex-col text-black border-r-4 border-slate-300 basis-3/5">
             <div className="px-1 text-lg font-bold text-white bg-slate-500">
-                Journey Descriptor
+                Descriptor
             </div>
             <Editor
                 defaultLanguage="yaml"
@@ -110,12 +121,13 @@ const JourneyEditor = () => {
 };
 
 const TechnicalNotes = () => {
-    const [value, setValue] = useState("");
+    const handler = useJourney();
+    const notes = handler.notes;
 
     useEffect(() => {
         const fetchData = async () => {
             const text = await loadMDExample();
-            setValue(text);
+            handler.updateNotes(text);
         };
 
         fetchData().catch(console.error);
@@ -123,17 +135,17 @@ const TechnicalNotes = () => {
 
     function update(value: string | undefined) {
         if (typeof value === "string") {
-            setValue(value);
+            handler.updateNotes(value);
         }
     }
 
     return (
         <div className="flex flex-col p-2 mt-4 border-t-2 border-dashed grow">
             <h1 className="px-1 text-lg font-bold text-white bg-slate-500">
-                Technical notes
+                Notes
             </h1>
             {/* <Editor defaultLanguage="markdown" defaultValue="# Hello!!!" theme="vs-dark" options={{fontSize:12,minimap:{enabled:false}}} /> */}
-            <MDEditor value={value} onChange={update} className="grow"/>
+            <MDEditor value={notes} onChange={update} className="grow" />
             {/* <MDEditor.Markdown source={value} style={{ whiteSpace: 'pre-wrap' }} /> */}
         </div>
     );

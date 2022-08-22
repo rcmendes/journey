@@ -1,1 +1,1 @@
-# journey
+Journey: A tool for mapping Feature's journeys.

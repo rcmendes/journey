@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import YAML from "yaml";
+import Editor from "@monaco-editor/react";
 
 interface Event {
     title: string;
@@ -57,7 +58,7 @@ function App() {
             <div className="flex flex-col w-screen h-screen bg-slate-100">
                 <JourneyHeader />
                 <main className="flex flex-row grow">
-                    <Editor />
+                    <JourneyEditor/>
                     <div className="w-2 cursor-move bg-slate-300 hover:bg-slate-700 hover:shadow-lg"/>
                     <div className="flex flex-col">
                         <JourneyMap />
@@ -81,19 +82,22 @@ const JourneyHeader = () => {
     );
 };
 
-const Editor = () => {
+const JourneyEditor = () => {
     const handler = useJourney();
     const journey = handler.data;
 
+    function handleEditorChange(value : string |undefined, event: any) {
+        // console.log("here is the current model value:", value, "| type:", typeof(event));
+        if (typeof(value) === "string") {
+            handler.update(value);
+        }
+        
+    }
+
     return (
-        <div className="flex flex-col text-black border-r-4 border-slate-300 basis-1/3">
+        <div className="flex flex-col text-black border-r-4 border-slate-300 basis-3/5">
             <div className="text-lg text-white bg-slate-500">TOOLBAR</div>
-            <textarea
-                className="p-1 text-sm resize-none grow"
-                // value={JSON.stringify(journey, null, 4)}
-                value={YAML.stringify(journey)}
-                onChange={(evt) => handler.update(evt.target.value)}
-            />
+            <Editor defaultLanguage="yaml" defaultValue={YAML.stringify(journey)} onChange={handleEditorChange} theme="vs-dark" options={{fontSize:12,minimap:{enabled:false}}} />
         </div>
     );
 };
@@ -113,7 +117,7 @@ const JourneyMap = () => {
     const journey = handler.data;
 
     return (
-        <div className="flex gap-1 justify-evenly basis-3/4">
+        <div className="flex gap-1 justify-evenly">
             {journey.chapters && journey.chapters.map((chapter, idx) => {
                 return (
                     <div

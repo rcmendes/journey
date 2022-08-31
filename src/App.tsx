@@ -40,7 +40,6 @@ const JourneyProvider = ({ children }: any) => {
         notes,
         updateData: (new_value: string) => {
             try {
-                // setJourney(JSON.parse(new_value));
                 const parsed_data = YAML.parse(new_value);
                 setJourney(parsed_data as Journey);
             } catch (e) {
@@ -81,14 +80,96 @@ function App() {
     );
 }
 
+const Toolbar = () => {
+    const handler = useJourney();
+    const journey = handler.data;
+    const [filename, setFilename] = useState("");
+
+    const getContent = (): any => {
+        const content = {
+            journey,
+            notes: handler.notes,
+        };
+
+        return JSON.stringify(content);
+    };
+
+    const updateJourney = (text: string, filename: string): void => {
+        const jsonData = JSON.parse(text);
+
+        handler.updateData(JSON.stringify(jsonData.journey));
+        handler.updateNotes(jsonData.notes);
+        setFilename(filename);
+    };
+
+    return (
+        <nav className="flex flex-row text-white bg-blue-500">
+            <div className="flex items-center h-full gap-2 p-2 mr-4">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    aria-label="download"
+                    className="w-8 h-8 p-1 transition duration-300 ease-in-out delay-150 rounded-full hover:scale-110 hover:stroke-2 hover:bg-blue-700"
+                    onClick={() => download(getContent())}
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                    />
+                </svg>
+                <label>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-8 h-8 p-1 transition duration-300 ease-in-out delay-150 rounded-full hover:scale-110 hover:stroke-2 hover:bg-blue-700"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                        />
+                    </svg>
+                    <input
+                        type="file"
+                        onChange={(evt) => readFile(evt, updateJourney)}
+                        accept=".json"
+                        className="hidden"
+                    />
+                </label>
+            </div>
+            <div
+                className={
+                    filename.length > 0
+                        ? "w-full ml-2 text-sm font-thin bg-blue-900 grow"
+                        : "hidden"
+                }
+            >
+                <div className="px-2">Loaded File:</div>
+                <div className="h-full px-2 font-bold bg-blue-700">
+                    {filename}
+                </div>
+            </div>
+        </nav>
+    );
+};
+
 const JourneyHeader = () => {
     const handler = useJourney();
     const journey = handler.data;
 
     return (
-        <header className="p-1 mb-1 text-center text-white bg-slate-700">
-            <h1 className="text-xl font-bold">{journey.title}</h1>
-            <p className="text-sm font-light">{journey.description}</p>
+        <header className="flex flex-row text-white bg-slate-700">
+            <div className="p-1 mb-1 text-center grow">
+                <h1 className="text-xl font-bold">{journey.title}</h1>
+                <p className="text-sm font-light">{journey.description}</p>
+            </div>
         </header>
     );
 };
@@ -98,7 +179,6 @@ const JourneyEditor = () => {
     const journey = handler.data;
 
     function handleEditorChange(value: string | undefined, event: any) {
-        // console.log("here is the current model value:", value, "| type:", typeof(event));
         if (typeof value === "string") {
             handler.updateData(value);
         }
@@ -106,12 +186,13 @@ const JourneyEditor = () => {
 
     return (
         <div className="flex flex-col text-black border-r-4 border-slate-300 basis-3/5">
+            <Toolbar />
             <div className="px-1 text-lg font-bold text-white bg-slate-500">
                 Descriptor
             </div>
             <Editor
                 defaultLanguage="yaml"
-                defaultValue={YAML.stringify(journey)}
+                value={YAML.stringify(journey)}
                 onChange={handleEditorChange}
                 theme="vs-dark"
                 options={{ fontSize: 12, minimap: { enabled: false } }}
@@ -131,6 +212,7 @@ const TechnicalNotes = () => {
         };
 
         fetchData().catch(console.error);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     function update(value: string | undefined) {
@@ -284,51 +366,40 @@ const JOURNEY_JSON = {
     ],
 };
 
-const JOURNEY_YAML = `
-title: Fake Journey
-description: This is a description of the Fake journey.
-chapters:
-- title: Chapter 1
-  events:
-  - title: Keycloak login page is shown.
-    tags:
-    - Keycloak
-  - title: The user fills in its credentials and fires login.
-    tags:
-    - User
-  - title: Keycloak validates the user's credentials and then verifies if the user
-      exists in its database.
-    tags:
-    - Keycloak
-  - title: If the user doesn't exist, Keycloak will request the User's data to AC
-      Cloud api.auth2 backend.
-    tags:
-    - Keycloak
-    - Python backend
-- title: Chapter 2
-  events:
-  - title: Chapter 2, event A
-    tags: []
-  - title: Chapter 2, event B
-    tags: []
-  - title: Chapter 2, event C
-    tags: []
-- title: Chapter 3
-  events:
-  - title: Chapter 3, event A
-    tags: []
-  - title: Chapter 3, event B
-    tags: []
-  - title: Chapter 3, event C
-    tags: []
-  - title: Chapter 3, event D
-    tags: []
-`;
-for (let i = 0; i < 3; i++) {}
-
 async function loadMDExample() {
     const response = await fetch("/examples/ex1.md");
     return await response.text();
+}
+
+function download(text: string) {
+    const filename = "journey.json";
+    var element = document.createElement("a");
+    element.setAttribute(
+        "href",
+        "data:text/plain;charset=utf-8," + encodeURIComponent(text)
+    );
+    element.setAttribute("download", filename);
+
+    element.style.display = "none";
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+}
+
+async function readFile(
+    event: any,
+    updateJourneyFn: (text: string, filename: string) => void
+) {
+    const file = event.target.files.item(0);
+
+    if (file) {
+        console.log(file);
+        const text = await file.text();
+
+        updateJourneyFn(text, file.name);
+    }
 }
 
 export default App;

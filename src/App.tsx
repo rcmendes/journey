@@ -5,21 +5,22 @@ import MDEditor from "@uiw/react-md-editor";
 
 interface Event {
     title: string;
-    tags: string[];
+    tags?: string[];
 }
 
 interface Chapter {
     title: string;
     events: Event[];
 }
-interface Journey {
+interface JourneyMap {
     title: string;
     description: string;
     chapters: Chapter[];
 }
 
 type journeyContextData = {
-    data: Journey;
+    updatedAt?: string;
+    journeyMap: JourneyMap;
     notes: string;
     updateData(new_value: string): void;
     updateNotes(new_value: string): void;
@@ -32,16 +33,16 @@ const useJourney = () => {
 };
 
 const JourneyProvider = ({ children }: any) => {
-    const [journey, setJourney] = useState(JOURNEY_JSON);
+    const [journeyMap, setJourneyMap] = useState(JOURNEY_MAP_JSON);
     const [notes, setNotes] = useState("");
 
     const value = {
-        data: journey,
+        journeyMap,
         notes,
         updateData: (new_value: string) => {
             try {
                 const parsed_data = YAML.parse(new_value);
-                setJourney(parsed_data as Journey);
+                setJourneyMap(parsed_data as JourneyMap);
             } catch (e) {
                 console.error(e);
             }
@@ -71,7 +72,7 @@ function App() {
                     <JourneyEditor />
                     <div className="w-2 cursor-move bg-slate-300 hover:bg-slate-700 hover:shadow-lg" />
                     <div className="flex flex-col grow">
-                        <JourneyMap />
+                        <JourneyMapContainer />
                         <TechnicalNotes />
                     </div>
                 </main>
@@ -82,16 +83,18 @@ function App() {
 
 const Toolbar = () => {
     const handler = useJourney();
-    const journey = handler.data;
+    const journeyMap = handler.journeyMap;
     const [filename, setFilename] = useState("");
 
     const getContent = (): any => {
         const content = {
-            journey,
+            version: "0.1",
+            updatedAt: new Date().toISOString(),
+            journey: journeyMap,
             notes: handler.notes,
         };
 
-        return JSON.stringify(content);
+        return JSON.stringify(content, null, 4);
     };
 
     const updateJourney = (text: string, filename: string): void => {
@@ -162,13 +165,13 @@ const Toolbar = () => {
 
 const JourneyHeader = () => {
     const handler = useJourney();
-    const journey = handler.data;
+    const { journeyMap } = handler;
 
     return (
         <header className="flex flex-row text-white bg-slate-700">
             <div className="p-1 mb-1 text-center grow">
-                <h1 className="text-xl font-bold">{journey.title}</h1>
-                <p className="text-sm font-light">{journey.description}</p>
+                <h1 className="text-xl font-bold">{journeyMap.title}</h1>
+                <p className="text-sm font-light">{journeyMap.description}</p>
             </div>
         </header>
     );
@@ -176,7 +179,7 @@ const JourneyHeader = () => {
 
 const JourneyEditor = () => {
     const handler = useJourney();
-    const journey = handler.data;
+    const { journeyMap } = handler;
 
     function handleEditorChange(value: string | undefined, event: any) {
         if (typeof value === "string") {
@@ -192,7 +195,7 @@ const JourneyEditor = () => {
             </div>
             <Editor
                 defaultLanguage="yaml"
-                value={YAML.stringify(journey)}
+                value={YAML.stringify(journeyMap)}
                 onChange={handleEditorChange}
                 theme="vs-dark"
                 options={{ fontSize: 12, minimap: { enabled: false } }}
@@ -233,14 +236,14 @@ const TechnicalNotes = () => {
     );
 };
 
-const JourneyMap = () => {
+const JourneyMapContainer = () => {
     const handler = useJourney();
-    const journey = handler.data;
+    const { journeyMap } = handler;
 
     return (
         <div className="flex gap-1 justify-evenly">
-            {journey.chapters &&
-                journey.chapters.map((chapter, idx) => {
+            {journeyMap.chapters &&
+                journeyMap.chapters.map((chapter, idx) => {
                     return (
                         <div
                             key={idx}
@@ -300,7 +303,7 @@ const JourneyMap = () => {
     );
 };
 
-const JOURNEY_JSON = {
+const JOURNEY_MAP_JSON = {
     title: "Fake Journey",
     description: "This is a description of the Fake journey.",
     chapters: [
@@ -336,10 +339,6 @@ const JOURNEY_JSON = {
                     title: "Chapter 2, event B",
                     tags: [],
                 },
-                {
-                    title: "Chapter 2, event C",
-                    tags: [],
-                },
             ],
         },
         {
@@ -347,19 +346,12 @@ const JOURNEY_JSON = {
             events: [
                 {
                     title: "Chapter 3, event A",
-                    tags: [],
                 },
                 {
                     title: "Chapter 3, event B",
-                    tags: [],
                 },
                 {
                     title: "Chapter 3, event C",
-                    tags: [],
-                },
-                {
-                    title: "Chapter 3, event D",
-                    tags: [],
                 },
             ],
         },
@@ -371,8 +363,24 @@ async function loadMDExample() {
     return await response.text();
 }
 
+function getCurrentDateTime(): string {
+    const dateNow = new Date();
+    return `${dateNow.getFullYear()}-${
+        dateNow.getMonth() < 10 ? "0" : ""
+    }${dateNow.getMonth()}-${
+        dateNow.getDate() < 10 ? "0" : ""
+    }${dateNow.getDate()}_at_${
+        dateNow.getHours() < 10 ? "0" : ""
+    }${dateNow.getHours()}.${
+        dateNow.getMinutes() < 10 ? "0" : ""
+    }${dateNow.getMinutes()}.${
+        dateNow.getSeconds() < 10 ? "0" : ""
+    }${dateNow.getSeconds()}`;
+}
+
 function download(text: string) {
-    const filename = "journey.json";
+    const currentDateTime = getCurrentDateTime();
+    const filename = `journey_${currentDateTime}.json`;
     var element = document.createElement("a");
     element.setAttribute(
         "href",
